@@ -18,6 +18,7 @@ from app.features.dataset.repositories import (
     DSMetaDataRepository,
     DSViewRecordRepository,
 )
+from app.features.dataset.standings import StandingsService, TeamStats
 from app.features.featuremodel.repositories import FeatureModelRepository, FMMetaDataRepository
 from app.features.hubfile.repositories import (
     HubfileDownloadRecordRepository,
@@ -255,6 +256,10 @@ class DataSetService(BaseService):
     def get_uvlhub_doi(self, dataset: DataSet) -> str:
         domain = os.getenv("DOMAIN", "localhost")
         return f"http://{domain}/doi/{dataset.ds_meta_data.dataset_doi}"
+
+    def get_standings(self, dataset_or_sources) -> list[TeamStats]:
+        """Calcula la clasificación y estadísticas por equipo para un dataset o lista de CSVs."""
+        return StandingsService().calculate(dataset_or_sources)
 
 
 class AuthorService(BaseService):
