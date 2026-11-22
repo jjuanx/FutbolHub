@@ -1,0 +1,6 @@
+# Sin issues en blanco: todo el trabajo empieza desde una plantilla (acta, sección 7)
+blank_issues_enabled: false
+contact_links:
+  - name: Diario del equipo (wiki)
+    url: https://github.com/jjuanx/FutbolHub/wiki
+    about: Actas de reunión y decisiones del equipo. Las dudas rápidas van al grupo de WhatsApp.
