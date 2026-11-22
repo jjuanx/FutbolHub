@@ -4,6 +4,10 @@
 
 # FutbolHub (uvlhub.io)
 
+[![Commits](https://github.com/jjuanx/FutbolHub/actions/workflows/CI_commits.yml/badge.svg)](https://github.com/jjuanx/FutbolHub/actions/workflows/CI_commits.yml)
+[![Lint](https://github.com/jjuanx/FutbolHub/actions/workflows/CI_lint.yml/badge.svg)](https://github.com/jjuanx/FutbolHub/actions/workflows/CI_lint.yml)
+[![Pytest](https://github.com/jjuanx/FutbolHub/actions/workflows/CI_pytest.yml/badge.svg)](https://github.com/jjuanx/FutbolHub/actions/workflows/CI_pytest.yml)
+
 Repositorio de datasets de resultados de partidos de fútbol en formato CSV integrado con Zenodo/fakenodo siguiendo principios de Ciencia Abierta — Evolución y Gestión de la Configuración (EGC 2026-2027).
 
 ## Documentación y Diario del Equipo
@@ -15,3 +19,10 @@ Repositorio de datasets de resultados de partidos de fútbol en formato CSV inte
   - [Registro de incumplimientos](docs/wiki/Incumplimientos.md)
 - **Guía de contribución y criterios de calidad:** [CONTRIBUTING.md](CONTRIBUTING.md)
 - **Documentación oficial de la base UVLHub:** [docs.uvlhub.io](https://docs.uvlhub.io/)
+
+## Cómo contribuir (equipo FutbolHub)
+
+Antes de empezar una issue, lee la [guía de contribución](CONTRIBUTING.md): ramas
+y commits (EGCFlow), revisión en la issue sin pull requests, lista de
+comprobación de integración en `trunk`, y criterios de revisión de código y de
+diseño de pruebas.
