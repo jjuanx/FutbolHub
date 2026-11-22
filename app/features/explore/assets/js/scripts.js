@@ -32,11 +32,28 @@ function send_query() {
         ['input', 'change'].forEach(eventType => filter.addEventListener(eventType, () => {
             const csrfToken = document.getElementById('csrf_token').value;
 
+            const getVal = (id) => {
+                const el = document.getElementById(id);
+                return el ? el.value : '';
+            };
+            const rawTags = getVal('tags');
+            const tagsList = rawTags
+                ? rawTags.split(',').map(t => t.trim()).filter(Boolean)
+                : [];
+
             const searchCriteria = {
                 csrf_token: csrfToken,
                 query: document.querySelector('#query').value,
                 publication_type: document.querySelector('#publication_type').value,
                 sorting: document.querySelector('[name="sorting"]:checked').value,
+                tags: tagsList,
+                author: getVal('author'),
+                date_from: getVal('date_from'),
+                date_to: getVal('date_to'),
+                min_matches: getVal('min_matches'),
+                max_matches: getVal('max_matches'),
+                min_teams: getVal('min_teams'),
+                max_teams: getVal('max_teams'),
             };
 
             console.log(document.querySelector('#publication_type').value);
@@ -169,8 +186,22 @@ function formatDate(dateString) {
 }
 
 function set_tag_as_query(tagName) {
+    const cleanTag = tagName.trim();
+    const tagsInput = document.getElementById('tags');
+    if (tagsInput) {
+        const currentTags = tagsInput.value
+            .split(',')
+            .map(t => t.trim())
+            .filter(Boolean);
+        if (!currentTags.includes(cleanTag)) {
+            currentTags.push(cleanTag);
+        }
+        tagsInput.value = currentTags.join(', ');
+        tagsInput.dispatchEvent(new Event('input', {bubbles: true}));
+        return;
+    }
     const queryInput = document.getElementById('query');
-    queryInput.value = tagName.trim();
+    queryInput.value = cleanTag;
     queryInput.dispatchEvent(new Event('input', {bubbles: true}));
 }
 
@@ -209,6 +240,11 @@ function clearFilters() {
     sortingOptions.forEach(option => {
         option.checked = option.value == "newest"; // replace "default" with whatever your default value is
         // option.dispatchEvent(new Event('input', {bubbles: true}));
+    });
+
+    ['tags', 'author', 'date_from', 'date_to', 'min_matches', 'max_matches', 'min_teams', 'max_teams'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.value = "";
     });
 
     // Perform a new search with the reset filters

@@ -82,6 +82,11 @@ def test_explore_page_renders_the_search_form(test_client):
     assert b"<b>Explore</b>" in response.data
     assert b'name="query"' in response.data
     assert b'name="publication_type"' in response.data
+    assert b'name="tags"' in response.data
+    assert b'name="min_matches"' in response.data
+    assert b'name="max_matches"' in response.data
+    assert b'name="min_teams"' in response.data
+    assert b'name="max_teams"' in response.data
 
 
 def test_search_returns_only_the_matching_datasets(test_app, test_client):
@@ -131,3 +136,26 @@ def test_search_without_a_json_body_behaves_like_an_unfiltered_search(test_app, 
         "Car Configurator",
         "Smart Home",
     ]
+
+
+def test_search_filters_by_multi_tags_and_metrics(test_app, test_client):
+    _seed_corpus(test_app)
+    with test_app.app_context():
+        ds1 = DataSet.query.filter(DataSet.ds_meta_data.has(title="Smart Home")).first()
+        ds1.ds_meta_data.number_of_matches = 380
+        ds1.ds_meta_data.number_of_teams = 20
+        ds2 = DataSet.query.filter(DataSet.ds_meta_data.has(title="Car Configurator")).first()
+        ds2.ds_meta_data.number_of_matches = 306
+        ds2.ds_meta_data.number_of_teams = 18
+        db.session.commit()
+
+    res = test_client.post(
+        "/explore",
+        json={
+            "tags": ["iot", "automotive"],
+            "min_matches": 350,
+            "min_teams": 20,
+        },
+    )
+    assert res.status_code == 200
+    assert [d["title"] for d in res.get_json()] == ["Smart Home"]
