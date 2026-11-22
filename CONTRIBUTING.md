@@ -40,8 +40,8 @@ puntos de esta lista y deja constancia en la issue (ver sección 7 del acta).
 
 ### CI y seguridad
 
-- [ ] El CI está en verde en la rama (commits, lint y pytest) y `rosemary test`
-      pasa en local.
+- [ ] El CI está en verde en la rama (commits y lint; pytest también tras integrar #6) y
+      `rosemary test` pasa en local.
 - [ ] No se suben secretos (tokens, contraseñas, ficheros `.env`).
 - [ ] Los ficheros `.env.*.example` se actualizan si se añaden variables nuevas.
 
@@ -231,11 +231,15 @@ def test_upload_csv_invalido_devuelve_400(test_client):
 
 | Tipo          | Comando                            | ¿Necesita DB? | ¿Necesita Docker? | ¿Corre en CI? |
 |---------------|------------------------------------|---------------|--------------------|----------------|
-| unit          | `rosemary test --unit`             | No            | No                 | Sí             |
-| repository    | `rosemary test --repository`       | Sí            | Sí                 | Sí             |
-| service       | `rosemary test --service`          | Sí            | Sí                 | Sí             |
-| integration   | `rosemary test --integration`      | Sí            | Sí                 | Sí             |
+| unit          | `rosemary test --unit`             | No            | No                 | Sí*            |
+| repository    | `rosemary test --repository`       | Sí            | Sí                 | Sí*            |
+| service       | `rosemary test --service`          | Sí            | Sí                 | Sí*            |
+| integration   | `rosemary test --integration`      | Sí            | Sí                 | Sí*            |
 | e2e           | `rosemary test --e2e`              | Sí            | Sí (Selenium Grid) | No (local)     |
+
+> \* **Nota sobre CI:** `CI_pytest.yml` corre actualmente en `main`. A partir de la issue #6
+> se ejecutará automáticamente en todas las ramas de tarea y `trunk`. Hasta entonces,
+> verificar el paso de pruebas en local con `rosemary test`.
 
 > **Por defecto** `rosemary test` ejecuta unit + repository + service +
 > integration (todo menos e2e y load).
