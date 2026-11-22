@@ -8,8 +8,11 @@
 #   - contains the heading "## Revisión de" (template in CONTRIBUTING.md)
 #   - has every checklist item ticked ("- [x]"), none left as "- [ ]"
 #   - has a "Resultado" line with "✅ Aprobado" and without "❌"
-#   - is written by someone who is not the issue's assignee
-# Issues closed as "not planned" (duplicated, discarded) are exempt.
+#   - is written by someone who is not the "Responsable" of the Seguimiento table
+#     (falls back to the assignees if the table has none)
+# Only the LAST review comment counts: a later "❌ Cambios solicitados" cancels
+# an earlier approval.
+# Issues closed as "not planned" or "duplicate" are exempt.
 # ----------------------------------------------------------------------------
 
 name: Closed Issue Review
@@ -25,7 +28,9 @@ jobs:
   review:
     name: Review registered
     runs-on: ubuntu-24.04
-    if: github.event.issue.state_reason != 'not_planned'
+    if: >-
+      github.event.issue.state_reason != 'not_planned' &&
+      github.event.issue.state_reason != 'duplicate'
 
     steps:
       - name: Check review comment
@@ -33,7 +38,12 @@ jobs:
         with:
           script: |
             const issue = context.payload.issue;
-            const assignees = issue.assignees.map((a) => a.login.toLowerCase());
+            // Responsable = row of the Seguimiento table; assignees only as fallback
+            // (the reviewer may stay assigned while the issue is "En revisión").
+            const owner = ((issue.body || '').match(/\*\*Responsable\*\*\s*\|\s*@?([A-Za-z0-9-]+)/) || [])[1];
+            const owners = owner
+              ? [owner.toLowerCase()]
+              : issue.assignees.map((a) => a.login.toLowerCase());
 
             const comments = await github.paginate(github.rest.issues.listComments, {
               owner: context.repo.owner,
@@ -49,19 +59,17 @@ jobs:
             if (reviews.length === 0) {
               problems.push('No hay ningún comentario de revisión (`## Revisión de <rama>`, plantilla en CONTRIBUTING.md).');
             } else {
-              const approved = reviews.some((c) => {
-                const result = (c.body.match(/^\*\*Resultado:\*\*.*$/m) || [''])[0];
-                return (
-                  !/- \[ \]/.test(c.body) &&
-                  /- \[x\]/i.test(c.body) &&
-                  result.includes('✅ Aprobado') &&
-                  !result.includes('❌') &&
-                  !assignees.includes(c.user.login.toLowerCase())
-                );
-              });
+              const c = reviews[reviews.length - 1];
+              const result = (c.body.match(/^\*\*Resultado:\*\*.*$/m) || [''])[0];
+              const approved =
+                !/- \[ \]/.test(c.body) &&
+                /- \[x\]/i.test(c.body) &&
+                result.includes('✅ Aprobado') &&
+                !result.includes('❌') &&
+                !owners.includes(c.user.login.toLowerCase());
               if (!approved) {
                 problems.push(
-                  'Ninguna revisión cumple los requisitos: todos los puntos marcados (`- [x]`), `**Resultado:** ✅ Aprobado` (sin `❌`) y escrita por alguien distinto del responsable.'
+                  'La última revisión no cumple los requisitos: todos los puntos marcados (`- [x]`), `**Resultado:** ✅ Aprobado` (sin `❌`) y escrita por alguien distinto del responsable.'
                 );
               }
             }
