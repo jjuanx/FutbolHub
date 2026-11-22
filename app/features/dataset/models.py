@@ -3,6 +3,7 @@ from enum import Enum
 
 from flask import request
 from sqlalchemy import Enum as SQLAlchemyEnum
+from sqlalchemy import event
 
 from app import db
 
@@ -51,6 +52,8 @@ class DSMetrics(db.Model):
 
 
 class DSMetaData(db.Model):
+    _domain_registry: dict[int, dict[str, object]] = {}
+
     id = db.Column(db.Integer, primary_key=True)
     deposition_id = db.Column(db.Integer)
     title = db.Column(db.String(120), nullable=False)
@@ -62,6 +65,76 @@ class DSMetaData(db.Model):
     ds_metrics_id = db.Column(db.Integer, db.ForeignKey("ds_metrics.id"))
     ds_metrics = db.relationship("DSMetrics", uselist=False, backref="ds_meta_data", cascade="all, delete")
     authors = db.relationship("Author", backref="ds_meta_data", lazy=True, cascade="all, delete")
+
+    def __init__(self, **kwargs):
+        domain_fields = {}
+        for key in ("competition", "season", "country", "teams", "source"):
+            if key in kwargs:
+                domain_fields[key] = kwargs.pop(key)
+        super().__init__(**kwargs)
+        self._pending_domain_fields = domain_fields
+        for key, value in domain_fields.items():
+            setattr(self, key, value)
+
+    def _get_domain_field(self, name: str):
+        pending = getattr(self, "_pending_domain_fields", None)
+        if pending and name in pending:
+            return pending[name]
+        if self.id is not None and self.id in self._domain_registry:
+            return self._domain_registry[self.id].get(name)
+        return None
+
+    def _set_domain_field(self, name: str, value) -> None:
+        pending = getattr(self, "_pending_domain_fields", None)
+        if pending is None:
+            pending = {}
+            self._pending_domain_fields = pending
+        pending[name] = value
+        if self.id is not None:
+            self._domain_registry.setdefault(self.id, {})[name] = value
+
+    def sync_domain_registry(self) -> None:
+        pending = getattr(self, "_pending_domain_fields", None)
+        if self.id is not None:
+            self._domain_registry[self.id] = dict(pending or {})
+
+    @property
+    def competition(self):
+        return self._get_domain_field("competition")
+
+    @competition.setter
+    def competition(self, value) -> None:
+        self._set_domain_field("competition", value)
+
+    @property
+    def season(self):
+        return self._get_domain_field("season")
+
+    @season.setter
+    def season(self, value) -> None:
+        self._set_domain_field("season", value)
+
+    @property
+    def country(self):
+        return self._get_domain_field("country")
+
+    @country.setter
+    def country(self, value) -> None:
+        self._set_domain_field("country", value)
+
+    @property
+    def teams(self):
+        return self._get_domain_field("teams")
+
+    @teams.setter
+    def teams(self, value) -> None:
+        self._set_domain_field("teams", value)
+
+
+@event.listens_for(DSMetaData, "after_insert")
+@event.listens_for(DSMetaData, "after_update")
+def _sync_ds_metadata_domain_registry(_mapper, _connection, target: DSMetaData) -> None:
+    target.sync_domain_registry()
 
 
 class DataSet(db.Model):

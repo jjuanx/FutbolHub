@@ -32,11 +32,20 @@ function send_query() {
         ['input', 'change'].forEach(eventType => filter.addEventListener(eventType, () => {
             const csrfToken = document.getElementById('csrf_token').value;
 
+            const competitionInput = document.querySelector('#competition');
+            const seasonInput = document.querySelector('#season');
+            const countryInput = document.querySelector('#country');
+            const teamInput = document.querySelector('#team');
+
             const searchCriteria = {
                 csrf_token: csrfToken,
                 query: document.querySelector('#query').value,
                 publication_type: document.querySelector('#publication_type').value,
                 sorting: document.querySelector('[name="sorting"]:checked').value,
+                competition: competitionInput ? competitionInput.value : '',
+                season: seasonInput ? seasonInput.value : '',
+                country: countryInput ? countryInput.value : '',
+                team: teamInput ? teamInput.value : '',
             };
 
             console.log(document.querySelector('#publication_type').value);
@@ -209,6 +218,11 @@ function clearFilters() {
     sortingOptions.forEach(option => {
         option.checked = option.value == "newest"; // replace "default" with whatever your default value is
         // option.dispatchEvent(new Event('input', {bubbles: true}));
+    });
+
+    ['#competition', '#season', '#country', '#team'].forEach(selector => {
+        const el = document.querySelector(selector);
+        if (el) el.value = "";
     });
 
     // Perform a new search with the reset filters

@@ -109,3 +109,24 @@ def test_filter_forwards_publication_type_to_the_repository(test_app, clean_data
     with test_app.app_context():
         _seed_corpus()
         assert _titles(ExploreService().filter(publication_type="book")) == ["Car Configurator"]
+
+
+def test_filter_forwards_domain_filters_to_the_repository(test_app, clean_database):
+    with test_app.app_context():
+        _seed_corpus()
+        ds = DataSet.query.filter(DataSet.ds_meta_data.has(title="Smart Home")).first()
+        ds.ds_meta_data.competition = "LaLiga"
+        ds.ds_meta_data.season = "2024-25"
+        ds.ds_meta_data.country = "España"
+        ds.ds_meta_data.teams = ["Sevilla FC", "Real Betis"]
+        db.session.commit()
+
+        service = ExploreService()
+        assert _titles(
+            service.filter(
+                competition="LaLiga",
+                season="2024-25",
+                country="España",
+                team="Sevilla FC",
+            )
+        ) == ["Smart Home"]
