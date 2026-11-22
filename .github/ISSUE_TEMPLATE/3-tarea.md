@@ -6,16 +6,12 @@ labels: ""
 assignees: ''
 ---
 
-<!-- Esta plantilla sirve para tres tipos: añade a mano la etiqueta tipo: docs, tipo: ci o tipo: refactor, además de prioridad: y WI:. -->
-
 ## Tipo de tarea
 - [ ] docs (documentación, diario, actas, README)
 - [ ] ci (workflows, entornos, despliegue, configuración del repo)
 - [ ] refactor (sin cambio de comportamiento)
 
 ## Descripción
-<!-- Qué hay que hacer y por qué. -->
-
 
 ## Tareas
 - [ ] 
