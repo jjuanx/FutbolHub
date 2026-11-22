@@ -52,3 +52,10 @@ Esta página recoge de forma cronológica todas las decisiones técnicas, arquit
 ### 21/11/2026 — Retirada del despliegue heredado del fork
 - **Decisión:** Eliminar los workflows heredados `CD_webhook.yml` y `CD_dockerhub.yml` y retirar la feature `webhook` de `features_prod` en `pyproject.toml` (manteniéndola en `features_dev` para conservar sus pruebas en desarrollo y CI).
 - **Motivo:** La sección 8 del Acta Fundacional establece Render como plataforma de producción; retirar los flujos heredados evita ejecuciones fallidas hacia servidores propios o Docker Hub ajenos al despliegue acordado (ver registro detallado en [`docs/decisiones/2026-11-21-despliegue-render.md`](https://github.com/jjuanx/FutbolHub/blob/trunk/docs/decisiones/2026-11-21-despliegue-render.md), issue #7).
+
+---
+
+### 22/11/2026 — Entrega 0.1.0
+- **Decisión:** Llevar `trunk` a `main` (94fe910), etiquetar `0.1.0` y publicar la [release 0.1.0](https://github.com/jjuanx/FutbolHub/releases/tag/0.1.0) para el seguimiento del 23 de noviembre. Incluye #1, #2, #3, #4, #5, #6, #7, #47 y #17 (esta última del hito 0.2.0, ya terminada). CI de `main` en verde (Commits, Lint y Pytest).
+- **Quién:** la hace el PM porque Alejandro, responsable de la #11, no podía hacerla ese día. Por el mismo motivo de plazo, el PM integró en `trunk` las issues #3, #6 y #47 tras su visto bueno, en lugar de sus autores; consta en cada issue.
+- **Pendiente:** comprobar en `main` que una issue cerrada sin revisión aprobada se reabre (#47), y el despliegue continuo en Render (#8, #9) para la entrega 0.2.0.

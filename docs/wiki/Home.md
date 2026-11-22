@@ -40,6 +40,7 @@ El detalle completo y justificado se encuentra en la página de **[Decisiones de
 | 08/11/2026 | **D-05: Render + MariaDB externa (filess.io)** | Plataforma de producción con `Dockerfile.render`, despliegue continuo (`CD_render.yml`) condicionado a CI en verde en `main`. | [Acta Fundacional, §8](Acta-Fundacional) |
 | 20/11/2026 | **D-06: Primer reparto de tareas (46 issues)** | Desglose en 46 issues de 1 a 3 días, etiquetas `tipo:` / `prioridad:` / `WI:`, hitos `0.1.0` (23 nov), `0.2.0` (30 nov) y `1.0.0` (defensa) y tablero Kanban. | [Decisiones §20/11/2026](Decisiones#20112026--primer-reparto-de-tareas) · Issue #1 |
 | 21/11/2026 | **D-07: Retirada de CD heredado del fork** | Eliminación de `CD_webhook.yml` y `CD_dockerhub.yml` y desactivación de `webhook` en `features_prod` para alinear el despliegue con Render. | [Decisiones §21/11/2026](Decisiones#21112026--retirada-del-despliegue-heredado-del-fork) · Issue #7 |
+| 22/11/2026 | **D-08: Entrega 0.1.0** | `trunk` llevado a `main`, etiqueta `0.1.0` y release con #1–#7, #17 y #47. La hace el PM en lugar del responsable por plazo. | [Decisiones §22/11/2026](Decisiones#22112026--entrega-010) · Issue #11 · [Release](https://github.com/jjuanx/FutbolHub/releases/tag/0.1.0) |
 
 ---
 
