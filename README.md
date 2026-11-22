@@ -4,6 +4,10 @@
 
 # uvlhub.io
 
+[![Commits](https://github.com/jjuanx/FutbolHub/actions/workflows/CI_commits.yml/badge.svg)](https://github.com/jjuanx/FutbolHub/actions/workflows/CI_commits.yml)
+[![Lint](https://github.com/jjuanx/FutbolHub/actions/workflows/CI_lint.yml/badge.svg)](https://github.com/jjuanx/FutbolHub/actions/workflows/CI_lint.yml)
+[![Pytest](https://github.com/jjuanx/FutbolHub/actions/workflows/CI_pytest.yml/badge.svg)](https://github.com/jjuanx/FutbolHub/actions/workflows/CI_pytest.yml)
+
 Repository of feature models in UVL format integrated with Zenodo and flamapy following Open Science principles - Developed by DiversoLab
 
 ## Official documentation
