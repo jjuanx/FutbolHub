@@ -113,12 +113,18 @@ def parse_season_range(
     end_d: date | None = None
 
     if isinstance(season_start, str):
-        start_d = datetime.strptime(season_start, "%Y-%m-%d").date()
+        try:
+            start_d = datetime.strptime(season_start.strip(), "%Y-%m-%d").date()
+        except ValueError:
+            raise ValueError(f"Formato de season_start no válido ('{season_start}'). Se esperaba AAAA-MM-DD.")
     elif isinstance(season_start, date):
         start_d = season_start
 
     if isinstance(season_end, str):
-        end_d = datetime.strptime(season_end, "%Y-%m-%d").date()
+        try:
+            end_d = datetime.strptime(season_end.strip(), "%Y-%m-%d").date()
+        except ValueError:
+            raise ValueError(f"Formato de season_end no válido ('{season_end}'). Se esperaba AAAA-MM-DD.")
     elif isinstance(season_end, date):
         end_d = season_end
 
@@ -152,7 +158,10 @@ def parse_season_range(
         y = int(match_year.group(1))
         return start_d or date(y, 1, 1), end_d or date(y, 12, 31)
 
-    return start_d, end_d
+    raise ValueError(
+        f"Formato de temporada no reconocido: '{season}'. "
+        "Formatos válidos: 'AAAA-AA', 'AAAA/AA', 'AAAA-AAAA', 'AAAA/AAAA' o 'AAAA'."
+    )
 
 
 class ResultsCSVValidator:
@@ -165,11 +174,16 @@ class ResultsCSVValidator:
         season_end: date | str | None = None,
     ):
         self.season = season
-        self.season_start, self.season_end = parse_season_range(
-            season=season,
-            season_start=season_start,
-            season_end=season_end,
-        )
+        self.init_error: str | None = None
+        try:
+            self.season_start, self.season_end = parse_season_range(
+                season=season,
+                season_start=season_start,
+                season_end=season_end,
+            )
+        except ValueError as exc:
+            self.season_start, self.season_end = None, None
+            self.init_error = str(exc)
 
     def validate(
         self,
@@ -177,6 +191,10 @@ class ResultsCSVValidator:
     ) -> CSVValidationResult:
         """Valida una fuente CSV (ruta, string, bytes o stream de texto/binario)."""
         result = CSVValidationResult(is_valid=True)
+
+        if self.init_error:
+            result.add_error(row=1, message=self.init_error)
+            return result
 
         text_content, read_error = self._read_text(source)
         if read_error:
@@ -259,21 +277,22 @@ class ResultsCSVValidator:
 
             # 2. Validar tipos: jornada
             jornada_val: int | None = None
-            try:
-                jornada_val = int(row_data["jornada"])
+            raw_jornada = row_data["jornada"]
+            if not re.match(r"^-?\d+$", raw_jornada) or "_" in raw_jornada or "+" in raw_jornada:
+                result.add_error(
+                    row=row_num,
+                    column="jornada",
+                    message=f"La jornada debe ser un número entero (se obtuvo '{raw_jornada}').",
+                )
+            else:
+                jornada_val = int(raw_jornada)
                 if jornada_val <= 0:
                     result.add_error(
                         row=row_num,
                         column="jornada",
-                        message=f"La jornada debe ser un número entero positivo (se obtuvo '{row_data['jornada']}').",
+                        message=f"La jornada debe ser un número entero positivo (se obtuvo '{raw_jornada}').",
                     )
                     jornada_val = None
-            except ValueError:
-                result.add_error(
-                    row=row_num,
-                    column="jornada",
-                    message=f"La jornada debe ser un número entero (se obtuvo '{row_data['jornada']}').",
-                )
 
             # 3. Validar tipos y formato: fecha
             match_date: date | None = None
@@ -296,8 +315,15 @@ class ResultsCSVValidator:
 
             # 4. Validar tipos y rango: goles_local y goles_visitante
             goles_local_val: int | None = None
-            try:
-                goles_local_val = int(row_data["goles_local"])
+            raw_goles_loc = row_data["goles_local"]
+            if not re.match(r"^-?\d+$", raw_goles_loc) or "_" in raw_goles_loc or "+" in raw_goles_loc:
+                result.add_error(
+                    row=row_num,
+                    column="goles_local",
+                    message=f"Los goles locales deben ser un número entero (se obtuvo '{raw_goles_loc}').",
+                )
+            else:
+                goles_local_val = int(raw_goles_loc)
                 if goles_local_val < 0:
                     result.add_error(
                         row=row_num,
@@ -305,16 +331,17 @@ class ResultsCSVValidator:
                         message=f"Los goles locales no pueden ser negativos ({goles_local_val}).",
                     )
                     goles_local_val = None
-            except ValueError:
-                result.add_error(
-                    row=row_num,
-                    column="goles_local",
-                    message=f"Los goles locales deben ser un número entero (se obtuvo '{row_data['goles_local']}').",
-                )
 
             goles_visitante_val: int | None = None
-            try:
-                goles_visitante_val = int(row_data["goles_visitante"])
+            raw_goles_vis = row_data["goles_visitante"]
+            if not re.match(r"^-?\d+$", raw_goles_vis) or "_" in raw_goles_vis or "+" in raw_goles_vis:
+                result.add_error(
+                    row=row_num,
+                    column="goles_visitante",
+                    message=f"Los goles visitantes deben ser un número entero (se obtuvo '{raw_goles_vis}').",
+                )
+            else:
+                goles_visitante_val = int(raw_goles_vis)
                 if goles_visitante_val < 0:
                     result.add_error(
                         row=row_num,
@@ -322,13 +349,6 @@ class ResultsCSVValidator:
                         message=f"Los goles visitantes no pueden ser negativos ({goles_visitante_val}).",
                     )
                     goles_visitante_val = None
-            except ValueError:
-                val = row_data["goles_visitante"]
-                result.add_error(
-                    row=row_num,
-                    column="goles_visitante",
-                    message=f"Los goles visitantes deben ser un número entero (se obtuvo '{val}').",
-                )
 
             # Si hubo errores de tipo básicos en la fila, no comprobamos reglas de negocio complejas
             if len(result.detailed_errors) > row_errors_before:
@@ -336,9 +356,10 @@ class ResultsCSVValidator:
 
             local = row_data["local"]
             visitante = row_data["visitante"]
+            same_team = local.casefold() == visitante.casefold()
 
             # 5. Un equipo no puede jugar contra sí mismo
-            if local.casefold() == visitante.casefold():
+            if same_team:
                 result.add_error(
                     row=row_num,
                     message=f"Un equipo no puede jugar contra sí mismo ('{local}').",
@@ -356,7 +377,8 @@ class ResultsCSVValidator:
                 matches_seen[match_key] = row_num
 
             # 7. Un equipo no puede jugar dos veces en la misma jornada
-            if jornada_val is not None:
+            # Si local == visitante, omitimos la comprobación de jornada para no generar un segundo error redundante
+            if jornada_val is not None and not same_team:
                 all_jornadas.add(jornada_val)
                 teams_in_jornada.setdefault(jornada_val, {})
                 for team in (local, visitante):
@@ -372,6 +394,8 @@ class ResultsCSVValidator:
                         )
                     else:
                         teams_in_jornada[jornada_val][t_key] = row_num
+            elif jornada_val is not None and same_team:
+                all_jornadas.add(jornada_val)
 
             # 8. Fechas fuera de la temporada declarada
             if match_date is not None:
@@ -401,21 +425,23 @@ class ResultsCSVValidator:
                 result.valid_rows += 1
                 all_teams.add(local)
                 all_teams.add(visitante)
-                assert jornada_val is not None
-                assert match_date is not None
-                assert goles_local_val is not None
-                assert goles_visitante_val is not None
-                result.matches.append(
-                    MatchRecord(
-                        row=row_num,
-                        jornada=jornada_val,
-                        fecha=match_date,
-                        local=local,
-                        visitante=visitante,
-                        goles_local=goles_local_val,
-                        goles_visitante=goles_visitante_val,
+                if (
+                    jornada_val is not None
+                    and match_date is not None
+                    and goles_local_val is not None
+                    and goles_visitante_val is not None
+                ):
+                    result.matches.append(
+                        MatchRecord(
+                            row=row_num,
+                            jornada=jornada_val,
+                            fecha=match_date,
+                            local=local,
+                            visitante=visitante,
+                            goles_local=goles_local_val,
+                            goles_visitante=goles_visitante_val,
+                        )
                     )
-                )
 
         result.teams = sorted(all_teams)
         result.jornadas = sorted(all_jornadas)

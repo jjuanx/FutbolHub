@@ -13,13 +13,12 @@ from pathlib import Path
 
 import pytest
 
-try:
-    from app.features.dataset.csv_validator import EXPECTED_COLUMNS, validate_results_csv
-except ImportError:
-    import sys
-
-    sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
-    from csv_validator import EXPECTED_COLUMNS, validate_results_csv
+from app.features.dataset.csv_validator import (
+    EXPECTED_COLUMNS,
+    ResultsCSVValidator,
+    parse_season_range,
+    validate_results_csv,
+)
 
 pytestmark = pytest.mark.unit
 
@@ -85,6 +84,16 @@ class TestGolesValidation:
         assert result.is_valid is False
         assert any("goles locales deben ser un número entero" in e.lower() for e in result.errors)
 
+    @pytest.mark.parametrize("valor_no_estricto", ["1_0", "+1", "2.0"])
+    def test_rechaza_goles_no_estrictos_guion_bajo_o_signo_mas(self, valor_no_estricto):
+        csv_data = (
+            "jornada,fecha,local,visitante,goles_local,goles_visitante\n"
+            f"1,2024-08-15,Betis,Sevilla,{valor_no_estricto},1\n"
+        )
+        result = validate_results_csv(csv_data)
+        assert result.is_valid is False
+        assert any("goles locales deben ser un número entero" in e.lower() for e in result.errors)
+
 
 # ═══════════════════════════════════════════════════════════════════════════════
 # 2. PARTICIONES DE EQUIVALENCIA Y VALORES LÍMITE: JORNADA
@@ -123,6 +132,16 @@ class TestJornadaValidation:
     def test_rechaza_jornada_no_entera(self, tipo_invalido):
         csv_data = (
             f"jornada,fecha,local,visitante,goles_local,goles_visitante\n{tipo_invalido},2024-08-15,Betis,Sevilla,1,0\n"
+        )
+        result = validate_results_csv(csv_data)
+        assert result.is_valid is False
+        assert any("jornada debe ser un número entero" in e.lower() for e in result.errors)
+
+    @pytest.mark.parametrize("valor_no_estricto", ["1_0", "+1", "1.0"])
+    def test_rechaza_jornada_no_estricta_guion_bajo_o_signo_mas(self, valor_no_estricto):
+        csv_data = (
+            "jornada,fecha,local,visitante,goles_local,goles_visitante\n"
+            f"{valor_no_estricto},2024-08-15,Betis,Sevilla,1,0\n"
         )
         result = validate_results_csv(csv_data)
         assert result.is_valid is False
@@ -232,6 +251,29 @@ class TestSeasonRangeValidation:
         )
         assert result_fuera.is_valid is False
 
+    def test_rechaza_formato_temporada_no_reconocido(self):
+        csv_data = "jornada,fecha,local,visitante,goles_local,goles_visitante\n1,2024-08-15,Betis,Sevilla,1,0\n"
+        result = validate_results_csv(csv_data, season="temporada 24")
+        assert result.is_valid is False
+        assert any("formato de temporada no reconocido" in e.lower() for e in result.errors)
+
+    def test_rechaza_season_start_con_formato_erroneo(self):
+        csv_data = "jornada,fecha,local,visitante,goles_local,goles_visitante\n1,2024-08-15,Betis,Sevilla,1,0\n"
+        result = validate_results_csv(csv_data, season_start="15/08/2024")
+        assert result.is_valid is False
+        assert any("formato de season_start no válido" in e.lower() for e in result.errors)
+
+    def test_instanciacion_directa_validator(self):
+        validator = ResultsCSVValidator(season="2024-25")
+        assert validator.season_start == date(2024, 7, 1)
+        assert validator.season_end == date(2025, 6, 30)
+
+    def test_parse_season_range_lanza_value_error_en_formato_invalido(self):
+        with pytest.raises(ValueError, match="Formato de temporada no reconocido"):
+            parse_season_range(season="temporada 24")
+        with pytest.raises(ValueError, match="Formato de season_start no válido"):
+            parse_season_range(season_start="invalido")
+
 
 # ═══════════════════════════════════════════════════════════════════════════════
 # 5. REGLAS DE INTEGRIDAD DEL DOMINIO DE FÚTBOL
@@ -247,6 +289,16 @@ class TestFootballDomainRules:
         assert result.is_valid is False
         assert any("un equipo no puede jugar contra sí mismo" in e.lower() for e in result.errors)
         assert any("sevilla fc" in e.lower() for e in result.errors)
+
+    def test_equipo_contra_si_mismo_genera_un_unico_error_sin_duplicado_jornada(self):
+        csv_data = (
+            "jornada,fecha,local,visitante,goles_local,goles_visitante\n" "1,2024-08-15,Sevilla FC,Sevilla FC,1,0\n"
+        )
+        result = validate_results_csv(csv_data)
+        assert result.is_valid is False
+        assert len(result.errors) == 1
+        assert "no puede jugar contra sí mismo" in result.errors[0]
+        assert not any("más de una vez en la jornada" in e for e in result.errors)
 
     def test_rechaza_equipo_contra_si_mismo_insensible_a_mayusculas(self):
         csv_data = (
