@@ -109,3 +109,15 @@ def test_filter_forwards_publication_type_to_the_repository(test_app, clean_data
     with test_app.app_context():
         _seed_corpus()
         assert _titles(ExploreService().filter(publication_type="book")) == ["Car Configurator"]
+
+
+def test_filter_forwards_tags_and_metrics_to_the_repository(test_app, clean_database):
+    with test_app.app_context():
+        _seed_corpus()
+        ds = DataSet.query.filter(DataSet.ds_meta_data.has(title="Smart Home")).first()
+        ds.ds_meta_data.number_of_matches = 380
+        ds.ds_meta_data.number_of_teams = 20
+        db.session.commit()
+
+        service = ExploreService()
+        assert _titles(service.filter(tags="iot, automotive", min_matches=380, min_teams=20)) == ["Smart Home"]

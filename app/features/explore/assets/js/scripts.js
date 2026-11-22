@@ -4,6 +4,87 @@ function on_explore_page() {
     return document.getElementById('filters') !== null;
 }
 
+const URL_TEXT_FILTER_IDS = [
+    'query',
+    'tags',
+    'author',
+    'date_from',
+    'date_to',
+    'competition',
+    'season',
+    'country',
+    'team',
+    'min_matches',
+    'max_matches',
+    'min_teams',
+    'max_teams',
+];
+
+function syncFiltersToUrl(criteria) {
+    if (typeof window === 'undefined' || !window.history || !window.history.replaceState) {
+        return;
+    }
+    const params = new URLSearchParams();
+    URL_TEXT_FILTER_IDS.forEach(key => {
+        if (key === 'tags') {
+            const tagsVal = Array.isArray(criteria.tags) ? criteria.tags.join(',') : (criteria.tags || '');
+            if (tagsVal.trim() !== '') {
+                params.set('tags', tagsVal.trim());
+            }
+            return;
+        }
+        const val = criteria[key];
+        if (val !== undefined && val !== null && String(val).trim() !== '') {
+            params.set(key, String(val).trim());
+        }
+    });
+
+    if (criteria.publication_type && criteria.publication_type !== 'any') {
+        params.set('publication_type', criteria.publication_type);
+    }
+    if (criteria.sorting && criteria.sorting !== 'newest') {
+        params.set('sorting', criteria.sorting);
+    }
+
+    const qs = params.toString();
+    const newUrl = qs ? `${window.location.pathname}?${qs}` : window.location.pathname;
+    window.history.replaceState(null, '', newUrl);
+}
+
+function restoreFiltersFromUrl() {
+    const urlParams = new URLSearchParams(window.location.search);
+
+    URL_TEXT_FILTER_IDS.forEach(id => {
+        const el = document.getElementById(id);
+        if (!el) return;
+        if (id === 'tags') {
+            const allTags = urlParams.getAll('tags');
+            if (allTags.length > 0) {
+                el.value = allTags.join(', ');
+            }
+            return;
+        }
+        const paramVal = urlParams.get(id);
+        if (paramVal !== null) {
+            el.value = paramVal;
+        }
+    });
+
+    const pubType = urlParams.get('publication_type');
+    const pubSelect = document.getElementById('publication_type');
+    if (pubType && pubSelect) {
+        pubSelect.value = pubType;
+    }
+
+    const sortingParam = urlParams.get('sorting');
+    if (sortingParam) {
+        const sortingRadios = document.querySelectorAll('[name="sorting"]');
+        sortingRadios.forEach(radio => {
+            radio.checked = radio.value === sortingParam;
+        });
+    }
+}
+
 document.addEventListener('DOMContentLoaded', () => {
     if (!on_explore_page()) return;
     send_query();
@@ -31,15 +112,35 @@ function send_query() {
         // them into a single repaint.
         ['input', 'change'].forEach(eventType => filter.addEventListener(eventType, () => {
             const csrfToken = document.getElementById('csrf_token').value;
+            const getVal = (id) => {
+                const el = document.getElementById(id);
+                return el ? el.value : '';
+            };
+            const rawTags = getVal('tags');
+            const tagsList = rawTags
+                ? rawTags.split(',').map(t => t.trim()).filter(Boolean)
+                : [];
 
             const searchCriteria = {
                 csrf_token: csrfToken,
                 query: document.querySelector('#query').value,
                 publication_type: document.querySelector('#publication_type').value,
                 sorting: document.querySelector('[name="sorting"]:checked').value,
+                tags: tagsList,
+                author: getVal('author'),
+                date_from: getVal('date_from'),
+                date_to: getVal('date_to'),
+                competition: getVal('competition'),
+                season: getVal('season'),
+                country: getVal('country'),
+                team: getVal('team'),
+                min_matches: getVal('min_matches'),
+                max_matches: getVal('max_matches'),
+                min_teams: getVal('min_teams'),
+                max_teams: getVal('max_teams'),
             };
 
-            console.log(document.querySelector('#publication_type').value);
+            syncFiltersToUrl(searchCriteria);
 
             if (inFlightController !== null) {
                 inFlightController.abort();
@@ -169,8 +270,22 @@ function formatDate(dateString) {
 }
 
 function set_tag_as_query(tagName) {
+    const cleanTag = tagName.trim();
+    const tagsInput = document.getElementById('tags');
+    if (tagsInput) {
+        const currentTags = tagsInput.value
+            .split(',')
+            .map(t => t.trim())
+            .filter(Boolean);
+        if (!currentTags.includes(cleanTag)) {
+            currentTags.push(cleanTag);
+        }
+        tagsInput.value = currentTags.join(', ');
+        tagsInput.dispatchEvent(new Event('input', {bubbles: true}));
+        return;
+    }
     const queryInput = document.getElementById('query');
-    queryInput.value = tagName.trim();
+    queryInput.value = cleanTag;
     queryInput.dispatchEvent(new Event('input', {bubbles: true}));
 }
 
@@ -193,44 +308,28 @@ if (document.getElementById('clear-filters')) {
 }
 
 function clearFilters() {
-
-    // Reset the search query
-    let queryInput = document.querySelector('#query');
-    queryInput.value = "";
-    // queryInput.dispatchEvent(new Event('input', {bubbles: true}));
-
-    // Reset the publication type to its default value
-    let publicationTypeSelect = document.querySelector('#publication_type');
-    publicationTypeSelect.value = "any"; // replace "any" with whatever your default value is
-    // publicationTypeSelect.dispatchEvent(new Event('input', {bubbles: true}));
-
-    // Reset the sorting option
-    let sortingOptions = document.querySelectorAll('[name="sorting"]');
-    sortingOptions.forEach(option => {
-        option.checked = option.value == "newest"; // replace "default" with whatever your default value is
-        // option.dispatchEvent(new Event('input', {bubbles: true}));
+    URL_TEXT_FILTER_IDS.forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.value = "";
     });
 
-    // Perform a new search with the reset filters
+    const publicationTypeSelect = document.querySelector('#publication_type');
+    if (publicationTypeSelect) publicationTypeSelect.value = "any";
+
+    const sortingOptions = document.querySelectorAll('[name="sorting"]');
+    sortingOptions.forEach(option => {
+        option.checked = option.value === "newest";
+    });
+
+    const queryInput = document.querySelector('#query');
     queryInput.dispatchEvent(new Event('input', {bubbles: true}));
 }
 
 document.addEventListener('DOMContentLoaded', () => {
-
     if (!on_explore_page()) return;
 
-    let urlParams = new URLSearchParams(window.location.search);
-    let queryParam = urlParams.get('query');
+    restoreFiltersFromUrl();
 
-    if (queryParam && queryParam.trim() !== '') {
-
-        const queryInput = document.getElementById('query');
-        queryInput.value = queryParam
-        queryInput.dispatchEvent(new Event('input', {bubbles: true}));
-        console.log("throw event");
-
-    } else {
-        const queryInput = document.getElementById('query');
-        queryInput.dispatchEvent(new Event('input', {bubbles: true}));
-    }
+    const queryInput = document.getElementById('query');
+    queryInput.dispatchEvent(new Event('input', {bubbles: true}));
 });

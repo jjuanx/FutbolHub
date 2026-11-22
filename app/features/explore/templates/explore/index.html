@@ -4,6 +4,10 @@
 
 {% block content %}
 
+    {% set uf = url_filters if url_filters is defined else {} %}
+    {% set sel_pub = uf.get('publication_type', 'any') %}
+    {% set sel_sort = uf.get('sorting', 'newest') %}
+
     <h1 class="h2 mb-3"><b>Explore</b></h1>
 
     <div class="row">
@@ -51,7 +55,7 @@
                                     Search for datasets by title, description, authors, tags, UVL files...
                                 </label>
                                 <input class="form-control" id="query" name="query" required="" type="text"
-                                       value="" autofocus>
+                                       value="{{ uf.get('query', query or '') }}" autofocus>
                             </div>
                         </div>
 
@@ -61,29 +65,141 @@
                                     type</label>
                                 <select class="form-control" id="publication_type" name="publication_type"
                                         required="">
-                                    <option value="any">Any</option>
-                                    <option value="none">None</option>
-                                    <option value="annotationcollection">Annotation Collection</option>
-                                    <option value="book">Book</option>
-                                    <option value="section">Book Section</option>
-                                    <option value="conferencepaper">Conference Paper</option>
-                                    <option value="datamanagementplan">Data Management Plan</option>
-                                    <option value="article">Journal Article</option>
-                                    <option value="patent">Patent</option>
-                                    <option value="preprint">Preprint</option>
-                                    <option value="deliverable">Project Deliverable</option>
-                                    <option value="milestone">Project Milestone</option>
-                                    <option value="proposal">Proposal</option>
-                                    <option value="report">Report</option>
-                                    <option value="softwaredocumentation">Software Documentation</option>
-                                    <option value="taxonomictreatment">Taxonomic Treatment</option>
-                                    <option value="technicalnote">Technical Note</option>
-                                    <option value="thesis">Thesis</option>
-                                    <option value="workingpaper">Working Paper</option>
-                                    <option value="other">Other</option>
+                                    <option value="any" {% if sel_pub == 'any' %}selected{% endif %}>Any</option>
+                                    <option value="none" {% if sel_pub == 'none' %}selected{% endif %}>None</option>
+                                    <option value="annotationcollection" {% if sel_pub == 'annotationcollection' %}selected{% endif %}>Annotation Collection</option>
+                                    <option value="book" {% if sel_pub == 'book' %}selected{% endif %}>Book</option>
+                                    <option value="section" {% if sel_pub == 'section' %}selected{% endif %}>Book Section</option>
+                                    <option value="conferencepaper" {% if sel_pub == 'conferencepaper' %}selected{% endif %}>Conference Paper</option>
+                                    <option value="datamanagementplan" {% if sel_pub == 'datamanagementplan' %}selected{% endif %}>Data Management Plan</option>
+                                    <option value="article" {% if sel_pub == 'article' %}selected{% endif %}>Journal Article</option>
+                                    <option value="patent" {% if sel_pub == 'patent' %}selected{% endif %}>Patent</option>
+                                    <option value="preprint" {% if sel_pub == 'preprint' %}selected{% endif %}>Preprint</option>
+                                    <option value="deliverable" {% if sel_pub == 'deliverable' %}selected{% endif %}>Project Deliverable</option>
+                                    <option value="milestone" {% if sel_pub == 'milestone' %}selected{% endif %}>Project Milestone</option>
+                                    <option value="proposal" {% if sel_pub == 'proposal' %}selected{% endif %}>Proposal</option>
+                                    <option value="report" {% if sel_pub == 'report' %}selected{% endif %}>Report</option>
+                                    <option value="softwaredocumentation" {% if sel_pub == 'softwaredocumentation' %}selected{% endif %}>Software Documentation</option>
+                                    <option value="taxonomictreatment" {% if sel_pub == 'taxonomictreatment' %}selected{% endif %}>Taxonomic Treatment</option>
+                                    <option value="technicalnote" {% if sel_pub == 'technicalnote' %}selected{% endif %}>Technical Note</option>
+                                    <option value="thesis" {% if sel_pub == 'thesis' %}selected{% endif %}>Thesis</option>
+                                    <option value="workingpaper" {% if sel_pub == 'workingpaper' %}selected{% endif %}>Working Paper</option>
+                                    <option value="other" {% if sel_pub == 'other' %}selected{% endif %}>Other</option>
                                 </select>
                             </div>
 
+                        </div>
+
+                        <div class="col-lg-6">
+                            <div class="mb-3">
+                                <label class="form-label" for="tags">Filter by tags (comma-separated)</label>
+                                <input class="form-control" id="tags" name="tags" type="text"
+                                       value="{{ uf.get('tags', '') }}" placeholder="e.g. iot, home, laliga">
+                            </div>
+                        </div>
+
+                    </div>
+
+                    <div class="row">
+
+                        <div class="col-lg-6">
+                            <div class="mb-3">
+                                <label class="form-label" for="author">Filter by author (name, affiliation or ORCID)</label>
+                                <input class="form-control" id="author" name="author" type="text"
+                                       value="{{ uf.get('author', '') }}" placeholder="Name, affiliation or ORCID">
+                            </div>
+                        </div>
+
+                        <div class="col-lg-3">
+                            <div class="mb-3">
+                                <label class="form-label" for="date_from">Published from</label>
+                                <input class="form-control" id="date_from" name="date_from" type="date"
+                                       value="{{ uf.get('date_from', '') }}">
+                            </div>
+                        </div>
+
+                        <div class="col-lg-3">
+                            <div class="mb-3">
+                                <label class="form-label" for="date_to">Published to</label>
+                                <input class="form-control" id="date_to" name="date_to" type="date"
+                                       value="{{ uf.get('date_to', '') }}">
+                            </div>
+                        </div>
+
+                    </div>
+
+                    <div class="row">
+
+                        <div class="col-lg-6">
+                            <div class="mb-3">
+                                <label class="form-label" for="competition">Filter by competition</label>
+                                <input class="form-control" id="competition" name="competition" type="text"
+                                       value="{{ uf.get('competition', '') }}" placeholder="e.g. LaLiga, Premier League">
+                            </div>
+                        </div>
+
+                        <div class="col-lg-6">
+                            <div class="mb-3">
+                                <label class="form-label" for="season">Filter by season</label>
+                                <input class="form-control" id="season" name="season" type="text"
+                                       value="{{ uf.get('season', '') }}" placeholder="e.g. 2024-25">
+                            </div>
+                        </div>
+
+                    </div>
+
+                    <div class="row">
+
+                        <div class="col-lg-6">
+                            <div class="mb-3">
+                                <label class="form-label" for="country">Filter by country</label>
+                                <input class="form-control" id="country" name="country" type="text"
+                                       value="{{ uf.get('country', '') }}" placeholder="e.g. España, England">
+                            </div>
+                        </div>
+
+                        <div class="col-lg-6">
+                            <div class="mb-3">
+                                <label class="form-label" for="team">Filter by team</label>
+                                <input class="form-control" id="team" name="team" type="text"
+                                       value="{{ uf.get('team', '') }}" placeholder="e.g. Sevilla FC">
+                            </div>
+                        </div>
+
+                    </div>
+
+                    <div class="row">
+
+                        <div class="col-lg-3">
+                            <div class="mb-3">
+                                <label class="form-label" for="min_matches">Min matches</label>
+                                <input class="form-control" id="min_matches" name="min_matches" type="number" min="0"
+                                       value="{{ uf.get('min_matches', '') }}">
+                            </div>
+                        </div>
+
+                        <div class="col-lg-3">
+                            <div class="mb-3">
+                                <label class="form-label" for="max_matches">Max matches</label>
+                                <input class="form-control" id="max_matches" name="max_matches" type="number" min="0"
+                                       value="{{ uf.get('max_matches', '') }}">
+                            </div>
+                        </div>
+
+                        <div class="col-lg-3">
+                            <div class="mb-3">
+                                <label class="form-label" for="min_teams">Min teams</label>
+                                <input class="form-control" id="min_teams" name="min_teams" type="number" min="0"
+                                       value="{{ uf.get('min_teams', '') }}">
+                            </div>
+                        </div>
+
+                        <div class="col-lg-3">
+                            <div class="mb-3">
+                                <label class="form-label" for="max_teams">Max teams</label>
+                                <input class="form-control" id="max_teams" name="max_teams" type="number" min="0"
+                                       value="{{ uf.get('max_teams', '') }}">
+                            </div>
                         </div>
 
                     </div>
@@ -96,13 +212,14 @@
                                 Sort results by creation date
                                 <label class="form-check">
                                     <input class="form-check-input" type="radio" value="newest" name="sorting"
-                                           checked="">
+                                           {% if sel_sort != 'oldest' %}checked=""{% endif %}>
                                     <span class="form-check-label">
                                       Newest first
                                     </span>
                                 </label>
                                 <label class="form-check">
-                                    <input class="form-check-input" type="radio" value="oldest" name="sorting">
+                                    <input class="form-check-input" type="radio" value="oldest" name="sorting"
+                                           {% if sel_sort == 'oldest' %}checked=""{% endif %}>
                                     <span class="form-check-label">
                                       Oldest first
                                     </span>

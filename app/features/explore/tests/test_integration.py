@@ -82,6 +82,11 @@ def test_explore_page_renders_the_search_form(test_client):
     assert b"<b>Explore</b>" in response.data
     assert b'name="query"' in response.data
     assert b'name="publication_type"' in response.data
+    assert b'name="tags"' in response.data
+    assert b'name="min_matches"' in response.data
+    assert b'name="max_matches"' in response.data
+    assert b'name="min_teams"' in response.data
+    assert b'name="max_teams"' in response.data
 
 
 def test_search_returns_only_the_matching_datasets(test_app, test_client):
@@ -131,3 +136,87 @@ def test_search_without_a_json_body_behaves_like_an_unfiltered_search(test_app, 
         "Car Configurator",
         "Smart Home",
     ]
+
+
+def test_search_filters_by_multi_tags_and_metrics(test_app, test_client):
+    _seed_corpus(test_app)
+    with test_app.app_context():
+        ds1 = DataSet.query.filter(DataSet.ds_meta_data.has(title="Smart Home")).first()
+        ds1.ds_meta_data.number_of_matches = 380
+        ds1.ds_meta_data.number_of_teams = 20
+        ds2 = DataSet.query.filter(DataSet.ds_meta_data.has(title="Car Configurator")).first()
+        ds2.ds_meta_data.number_of_matches = 306
+        ds2.ds_meta_data.number_of_teams = 18
+        db.session.commit()
+
+    res = test_client.post(
+        "/explore",
+        json={
+            "tags": ["iot", "automotive"],
+            "min_matches": 350,
+            "min_teams": 20,
+        },
+    )
+    assert res.status_code == 200
+    assert [d["title"] for d in res.get_json()] == ["Smart Home"]
+
+
+def test_opening_url_with_filters_restores_form_fields_and_returns_same_results(test_app, test_client):
+    _seed_corpus(test_app)
+    with test_app.app_context():
+        ds1 = DataSet.query.filter(DataSet.ds_meta_data.has(title="Smart Home")).first()
+        ds1.ds_meta_data.competition = "LaLiga"
+        ds1.ds_meta_data.season = "2024-25"
+        ds1.ds_meta_data.country = "España"
+        ds1.ds_meta_data.teams = ["Sevilla FC", "Real Betis"]
+        ds1.ds_meta_data.number_of_matches = 380
+        ds1.ds_meta_data.number_of_teams = 20
+        db.session.commit()
+
+    query_string = (
+        "query=home&publication_type=article&tags=iot,home&author=Alice"
+        "&date_from=2024-01-01&date_to=2024-01-31&competition=LaLiga"
+        "&season=2024-25&country=España&team=Sevilla+FC"
+        "&min_matches=300&max_matches=400&min_teams=18&max_teams=20&sorting=oldest"
+    )
+
+    # 1. Al abrir la URL en el navegador, el formulario restaura los filtros
+    page_res = test_client.get(f"/explore?{query_string}")
+    assert page_res.status_code == 200
+    html = page_res.data.decode("utf-8")
+    assert 'value="home"' in html
+    assert 'value="iot,home"' in html
+    assert 'value="Alice"' in html
+    assert 'value="LaLiga"' in html
+    assert 'value="2024-25"' in html
+    assert 'value="Sevilla FC"' in html
+    assert 'value="300"' in html
+
+    # 2. La búsqueda por URL devuelve exactamente los mismos resultados que la búsqueda por POST JSON
+    json_payload = {
+        "query": "home",
+        "publication_type": "article",
+        "tags": ["iot", "home"],
+        "author": "Alice",
+        "date_from": "2024-01-01",
+        "date_to": "2024-01-31",
+        "competition": "LaLiga",
+        "season": "2024-25",
+        "country": "España",
+        "team": "Sevilla FC",
+        "min_matches": 300,
+        "max_matches": 400,
+        "min_teams": 18,
+        "max_teams": 20,
+        "sorting": "oldest",
+    }
+    post_res = test_client.post("/explore", json=json_payload)
+    url_get_res = test_client.get(f"/explore?{query_string}&format=json")
+    url_post_res = test_client.post(f"/explore?{query_string}")
+
+    assert post_res.status_code == 200
+    assert url_get_res.status_code == 200
+    assert url_post_res.status_code == 200
+    assert url_get_res.get_json() == post_res.get_json()
+    assert url_post_res.get_json() == post_res.get_json()
+    assert [d["title"] for d in url_get_res.get_json()] == ["Smart Home"]
