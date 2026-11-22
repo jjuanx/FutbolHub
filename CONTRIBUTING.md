@@ -365,7 +365,7 @@ El equipo sigue EGCFlow: ramas de tarea cortas que se integran a menudo en
 
 | Rama | Propósito | Vida | Reglas |
 |------|-----------|------|--------|
-| `main` | Línea de entregas. Cada estado entregado lleva una etiqueta. | Permanente | Solo recibe estados estables de `trunk` (sección 12). Nadie trabaja ni hace commits directamente en ella. Cada push despliega en Render. |
+| `main` | Línea de entregas. Cada estado entregado lleva una etiqueta. | Permanente | Solo recibe estados estables de `trunk` (sección 12). Nadie trabaja ni hace commits directamente en ella. Ahora no hay despliegue automático: los workflows heredados se retiraron en #7 ([decisión](docs/decisiones/2026-11-21-despliegue-render.md)) y el despliegue en Render con CI en verde llegará con `CD_render.yml` (#9). |
 | `trunk` | Línea de integración del equipo. | Permanente | Siempre construye y pasa las pruebas básicas, para que cualquiera pueda partir de ella. Solo recibe merges de ramas de tarea revisadas. |
 | Rama de tarea (`17-validador-csv`) | Una funcionalidad, corrección, refactorización o mejora de documentación concreta. | Hasta que la tarea termina | Se crea desde `trunk`, se integra en `trunk` y se borra. |
 
