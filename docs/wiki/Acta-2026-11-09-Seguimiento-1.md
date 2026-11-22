@@ -48,4 +48,4 @@
 | Documentación | Activar la wiki y estructurar el diario del equipo con el acta fundacional, plantilla de acta y registro de decisiones | `@RobertoRoloG` |
 | Configuración | Documentar el flujo EGCFlow del equipo (ramas, commits, revisión e integración sin PR) en `CONTRIBUTING.md` | `@alepm03` |
 | Calidad (QA) | Redactar la checklist de revisión de código y la guía de diseño de pruebas (particiones de equivalencia y valores límite) | `@Nicopm0905` |
-| DevOps / CI | Activar GitHub Actions en el fork, adaptar el CI para que corra en todas las ramas y retirar los workflows de CD heredados del fork | `@Madunguin` |
+| DevOps / CI | Adaptar el CI para que corra en todas las ramas y retirar los workflows de CD heredados del fork | `@Madunguin` |
