@@ -1,0 +1,101 @@
+# ----------------------------------------------------------------------------
+# Closed Issue Review Workflow
+# The team does not use pull requests: the review of a task is a comment in its
+# issue (acta, sections 5 and 7). When an issue is closed this workflow checks
+# that such a review exists. If not, it reopens the issue and says what is missing.
+#
+# A valid review is a comment that:
+#   - contains the heading "## Revisión de" (template in CONTRIBUTING.md)
+#   - has every checklist item ticked ("- [x]"), none left as "- [ ]"
+#   - has a "Resultado" line with "✅ Aprobado" and without "❌"
+#   - is written by someone who is not the "Responsable" of the Seguimiento table
+#     (falls back to the assignees if the table has none)
+# Only the LAST review comment counts: a later "❌ Cambios solicitados" cancels
+# an earlier approval.
+# Issues closed as "not planned" or "duplicate" are exempt.
+# ----------------------------------------------------------------------------
+
+name: Closed Issue Review
+
+on:
+  issues:
+    types: [closed]
+
+permissions:
+  issues: write
+
+jobs:
+  review:
+    name: Review registered
+    runs-on: ubuntu-24.04
+    if: >-
+      github.event.issue.state_reason != 'not_planned' &&
+      github.event.issue.state_reason != 'duplicate'
+
+    steps:
+      - name: Check review comment
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const issue = context.payload.issue;
+            // Responsable = row of the Seguimiento table; assignees only as fallback
+            // (the reviewer may stay assigned while the issue is "En revisión").
+            const owner = ((issue.body || '').match(/\*\*Responsable\*\*\s*\|\s*@?([A-Za-z0-9-]+)/) || [])[1];
+            const owners = owner
+              ? [owner.toLowerCase()]
+              : issue.assignees.map((a) => a.login.toLowerCase());
+
+            const comments = await github.paginate(github.rest.issues.listComments, {
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: issue.number,
+              per_page: 100,
+            });
+
+            const problems = [];
+            const reviews = comments.filter(
+              (c) => c.user.type !== 'Bot' && /^##\s+Revisión de/m.test(c.body)
+            );
+            if (reviews.length === 0) {
+              problems.push('No hay ningún comentario de revisión (`## Revisión de <rama>`, plantilla en CONTRIBUTING.md).');
+            } else {
+              const c = reviews[reviews.length - 1];
+              const result = (c.body.match(/^\*\*Resultado:\*\*.*$/m) || [''])[0];
+              const approved =
+                !/- \[ \]/.test(c.body) &&
+                /- \[x\]/i.test(c.body) &&
+                result.includes('✅ Aprobado') &&
+                !result.includes('❌') &&
+                !owners.includes(c.user.login.toLowerCase());
+              if (!approved) {
+                problems.push(
+                  'La última revisión no cumple los requisitos: todos los puntos marcados (`- [x]`), `**Resultado:** ✅ Aprobado` (sin `❌`) y escrita por alguien distinto del responsable.'
+                );
+              }
+            }
+
+            if (problems.length === 0) {
+              core.info('Revisión registrada: la issue puede quedar cerrada.');
+              return;
+            }
+
+            await github.rest.issues.update({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: issue.number,
+              state: 'open',
+              state_reason: 'reopened',
+            });
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: issue.number,
+              body: [
+                'Issue reabierta automáticamente: no se puede cerrar sin revisión registrada (acta, secciones 5 y 7).',
+                '',
+                ...problems.map((p) => `- ${p}`),
+                '',
+                'Si se cierra sin cambios de código (duplicada, descartada), ciérrala como **«Not planned»** y explica el motivo en un comentario.',
+              ].join('\n'),
+            });
+            core.setFailed('Issue cerrada sin revisión registrada.');

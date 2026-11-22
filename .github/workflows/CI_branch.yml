@@ -1,0 +1,46 @@
+# ----------------------------------------------------------------------------
+# Branch Traceability Workflow
+# Checks the EGCFlow naming rules of the team (acta, section 5) on every push
+# to a task branch:
+#   - the branch name starts with the issue number (e.g. 12-validador-csv)
+#   - every commit of the branch references that issue with "(#12)"
+# trunk and main are skipped: they only receive already-validated branches.
+# ----------------------------------------------------------------------------
+
+name: Branch Traceability
+
+on:
+  push:
+    branches-ignore: [trunk, main]
+
+jobs:
+  traceability:
+    name: Branch name and issue reference
+    runs-on: ubuntu-24.04
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+
+      - name: Check branch name and commit references
+        env:
+          BRANCH: ${{ github.ref_name }}
+        run: |
+          if ! [[ "$BRANCH" =~ ^([0-9]+)-[a-z0-9][a-z0-9-]*$ ]]; then
+            echo "::error::La rama '$BRANCH' debe empezar por el número de su issue (p. ej. 12-validador-csv)."
+            exit 1
+          fi
+          issue="${BASH_REMATCH[1]}"
+
+          # Commits of the branch that are not in trunk yet (merges excluded).
+          failed=0
+          while IFS=$'\t' read -r sha subject; do
+            if ! [[ "$subject" =~ \(#${issue}\)$ ]]; then
+              echo "::error::El commit ${sha:0:7} no termina con '(#${issue})': $subject"
+              failed=1
+            fi
+          done < <(git log --no-merges --format='%H%x09%s' "origin/trunk..HEAD")
+
+          exit $failed
