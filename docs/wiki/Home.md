@@ -22,8 +22,8 @@ Según la sección 4 del [Acta Fundacional](Acta-Fundacional), esta wiki constit
 ## 2. Índice de reuniones y actas
 
 - **[Plantilla de acta de reunión](Plantilla-Acta-Reunion)** — Formato estándar acordado (asistentes, temas tratados, acuerdos y tareas con responsable).
-- **[08/11/2026 — Acta Fundacional (v2)](Acta-Fundacional)** — Constitución del equipo, definición del dominio FutbolHub, reparto de roles y WIs, acuerdos de comunicación, EGCFlow, régimen interno y CI/CD ([PDF firmado](../FutbolHub%20-%20Acta%20fundacional%20v2%20corregida.pdf)).
-- **[09/11/2026 — Reunión y Seguimiento Oficial 1](Acta-2026-11-09-Seguimiento-1)** — Entrega del acta fundacional, revisión inicial con el tutor José Manuel Sánchez Ruiz y planificación del primer reparto de tareas para el hito `0.1.0`.
+- **[08/11/2026 — Acta Fundacional (v2)](Acta-Fundacional)** — Constitución del equipo, definición del dominio FutbolHub, reparto de roles y WIs, acuerdos de comunicación, EGCFlow, régimen interno y CI/CD ([PDF firmado en el repositorio](https://github.com/jjuanx/FutbolHub/blob/trunk/docs/FutbolHub%20-%20Acta%20fundacional%20v2%20corregida.pdf)).
+- **[09/11/2026 — Reunión y Seguimiento Oficial 1](Acta-2026-11-09-Seguimiento-1)** — Entrega del acta fundacional en el primer seguimiento con el tutor José Manuel Sánchez Ruiz y acuerdos de puesta en marcha del repositorio.
 
 ---
 
@@ -43,6 +43,7 @@ El detalle completo y justificado se encuentra en la página de **[Decisiones de
 
 ---
 
-## 4. Régimen interno e incumplimientos
+## 4. Documentación de proceso y régimen interno
 
+- **[Etiquetas y Gestión de Incidencias](Etiquetas-y-Gestion-de-Incidencias)** — Catálogo y uso de las etiquetas `tipo:`, `prioridad:` y `WI:`, plantillas de issues y estados del tablero Kanban.
 - **[Registro de Incumplimientos](Incumplimientos)** — Seguimiento de las normas de obligado cumplimiento y tabla de escalado (sección 6 del Acta Fundacional).

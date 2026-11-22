@@ -3,6 +3,7 @@
 * **[Inicio del Diario](Home)**
 * **[Decisiones del Equipo](Decisiones)**
 * **[Plantilla de Acta](Plantilla-Acta-Reunion)**
+* **[Etiquetas e Incidencias](Etiquetas-y-Gestion-de-Incidencias)**
 * **[Registro de Incumplimientos](Incumplimientos)**
 
 #### Actas de reunión
