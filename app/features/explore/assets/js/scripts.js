@@ -32,11 +32,18 @@ function send_query() {
         ['input', 'change'].forEach(eventType => filter.addEventListener(eventType, () => {
             const csrfToken = document.getElementById('csrf_token').value;
 
+            const authorInput = document.querySelector('#author');
+            const dateFromInput = document.querySelector('#date_from');
+            const dateToInput = document.querySelector('#date_to');
+
             const searchCriteria = {
                 csrf_token: csrfToken,
                 query: document.querySelector('#query').value,
                 publication_type: document.querySelector('#publication_type').value,
                 sorting: document.querySelector('[name="sorting"]:checked').value,
+                author: authorInput ? authorInput.value : '',
+                date_from: dateFromInput ? dateFromInput.value : '',
+                date_to: dateToInput ? dateToInput.value : '',
             };
 
             console.log(document.querySelector('#publication_type').value);
@@ -210,6 +217,13 @@ function clearFilters() {
         option.checked = option.value == "newest"; // replace "default" with whatever your default value is
         // option.dispatchEvent(new Event('input', {bubbles: true}));
     });
+
+    const authorInput = document.querySelector('#author');
+    if (authorInput) authorInput.value = "";
+    const dateFromInput = document.querySelector('#date_from');
+    if (dateFromInput) dateFromInput.value = "";
+    const dateToInput = document.querySelector('#date_to');
+    if (dateToInput) dateToInput.value = "";
 
     // Perform a new search with the reset filters
     queryInput.dispatchEvent(new Event('input', {bubbles: true}));

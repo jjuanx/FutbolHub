@@ -27,6 +27,8 @@ def _make_dataset(
     title,
     description="a description",
     author_name="Anonymous Author",
+    author_affiliation="Some University",
+    author_orcid="0000-0000-0000-0000",
     tags="",
     created_at=None,
     publication_type=PublicationType.JOURNAL_ARTICLE,
@@ -42,7 +44,14 @@ def _make_dataset(
     )
     db.session.add(ds_meta_data)
     db.session.flush()
-    db.session.add(Author(name=author_name, affiliation="Some University", ds_meta_data_id=ds_meta_data.id))
+    db.session.add(
+        Author(
+            name=author_name,
+            affiliation=author_affiliation,
+            orcid=author_orcid,
+            ds_meta_data_id=ds_meta_data.id,
+        )
+    )
     dataset = DataSet(
         user_id=_owner().id,
         ds_meta_data_id=ds_meta_data.id,
@@ -71,24 +80,30 @@ def _seed_corpus():
         title="Smart Home",
         description="home automation product line",
         author_name="Alice Doe",
+        author_affiliation="Universidad de Sevilla",
+        author_orcid="0000-0001-2345-6789",
         tags="iot,home",
-        created_at=datetime(2024, 1, 1),
+        created_at=datetime(2024, 1, 15, 10, 30),
         publication_type=PublicationType.JOURNAL_ARTICLE,
     )
     _make_dataset(
         title="Car Configurator",
         description="vehicle variability",
         author_name="Bob Roe",
+        author_affiliation="MIT",
+        author_orcid="0000-0002-9876-5432",
         tags="automotive",
-        created_at=datetime(2024, 2, 1),
+        created_at=datetime(2024, 2, 10, 14, 0),
         publication_type=PublicationType.BOOK,
     )
     _make_dataset(
         title="Home Banking",
         description="finance product line",
         author_name="Carol Poe",
+        author_affiliation="Universidad de Málaga",
+        author_orcid="0000-0003-1111-2222",
         tags="finance",
-        created_at=datetime(2024, 3, 1),
+        created_at=datetime(2024, 3, 20, 18, 45),
         publication_type=PublicationType.JOURNAL_ARTICLE,
     )
     # Never returned: the query requires a non-null dataset_doi.
@@ -201,3 +216,60 @@ def test_tags_combine_with_the_query(test_app, clean_database):
         # "home" alone matches two datasets; the tag narrows them to one.
         assert _titles(repository.filter("home")) == ["Home Banking", "Smart Home"]
         assert _titles(repository.filter("home", tags=["iot"])) == ["Smart Home"]
+
+
+def test_filter_by_author_matches_name_affiliation_and_orcid(test_app, clean_database):
+    with test_app.app_context():
+        _seed_corpus()
+        repository = ExploreRepository()
+        # Por nombre de autor
+        assert _titles(repository.filter("", author="Alice")) == ["Smart Home"]
+        # Por afiliación (incluyendo coincidencia sin tilde: "Malaga" -> "Universidad de Málaga")
+        assert _titles(repository.filter("", author="Sevilla")) == ["Smart Home"]
+        assert _titles(repository.filter("", author="Malaga")) == ["Home Banking"]
+        assert _titles(repository.filter("", author="Universidad")) == ["Home Banking", "Smart Home"]
+        # Por ORCID
+        assert _titles(repository.filter("", author="0000-0002-9876-5432")) == ["Car Configurator"]
+        # Sin coincidencias
+        assert _titles(repository.filter("", author="Inexistente")) == []
+
+
+def test_filter_by_specific_author_fields(test_app, clean_database):
+    with test_app.app_context():
+        _seed_corpus()
+        repository = ExploreRepository()
+        assert _titles(repository.filter("", author_name="Carol")) == ["Home Banking"]
+        assert _titles(repository.filter("", author_affiliation="MIT")) == ["Car Configurator"]
+        assert _titles(repository.filter("", author_orcid="0000-0001-2345-6789")) == ["Smart Home"]
+        assert _titles(repository.filter("", author_name="Carol", author_affiliation="MIT")) == []
+
+
+def test_filter_by_date_range_boundaries_and_empty_ranges(test_app, clean_database):
+    with test_app.app_context():
+        _seed_corpus()
+        repository = ExploreRepository()
+        # Límite exacto del día (incluye horas dentro del día límite)
+        assert _titles(repository.filter("", date_from="2024-01-15", date_to="2024-02-10")) == [
+            "Car Configurator",
+            "Smart Home",
+        ]
+        # Un día después del primero y un día antes del tercero
+        assert _titles(repository.filter("", date_from="2024-01-16", date_to="2024-03-19")) == [
+            "Car Configurator",
+        ]
+        # Solo límite inferior (date_from)
+        assert _titles(repository.filter("", date_from="2024-02-10")) == [
+            "Home Banking",
+            "Car Configurator",
+        ]
+        # Solo límite superior (date_to)
+        assert _titles(repository.filter("", date_to="2024-02-10")) == [
+            "Car Configurator",
+            "Smart Home",
+        ]
+        # Rango vacío (sin datasets en ese intervalo)
+        assert _titles(repository.filter("", date_from="2025-01-01", date_to="2025-12-31")) == []
+        # Rango invertido (date_from > date_to) devuelve lista vacía
+        assert _titles(repository.filter("", date_from="2024-03-20", date_to="2024-01-15")) == []
+        # Fechas vacías o con formato inválido se ignoran sin lanzar error
+        assert len(repository.filter("", date_from="", date_to="fecha-invalida")) == 3

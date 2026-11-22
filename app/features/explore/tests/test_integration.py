@@ -82,6 +82,9 @@ def test_explore_page_renders_the_search_form(test_client):
     assert b"<b>Explore</b>" in response.data
     assert b'name="query"' in response.data
     assert b'name="publication_type"' in response.data
+    assert b'name="author"' in response.data
+    assert b'name="date_from"' in response.data
+    assert b'name="date_to"' in response.data
 
 
 def test_search_returns_only_the_matching_datasets(test_app, test_client):
@@ -131,3 +134,19 @@ def test_search_without_a_json_body_behaves_like_an_unfiltered_search(test_app, 
         "Car Configurator",
         "Smart Home",
     ]
+
+
+def test_search_filters_by_author_and_date_range(test_app, test_client):
+    _seed_corpus(test_app)
+
+    by_author = test_client.post("/explore", json={"author": "Carol Poe"})
+    assert by_author.status_code == 200
+    assert [d["title"] for d in by_author.get_json()] == ["Home Banking"]
+
+    by_affiliation = test_client.post("/explore", json={"author": "Some University", "date_to": "2024-02-01"})
+    assert by_affiliation.status_code == 200
+    assert [d["title"] for d in by_affiliation.get_json()] == ["Car Configurator", "Smart Home"]
+
+    empty_range = test_client.post("/explore", json={"date_from": "2024-03-01", "date_to": "2024-01-01"})
+    assert empty_range.status_code == 200
+    assert empty_range.get_json() == []

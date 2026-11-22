@@ -109,3 +109,12 @@ def test_filter_forwards_publication_type_to_the_repository(test_app, clean_data
     with test_app.app_context():
         _seed_corpus()
         assert _titles(ExploreService().filter(publication_type="book")) == ["Car Configurator"]
+
+
+def test_filter_forwards_author_and_date_range_to_the_repository(test_app, clean_database):
+    with test_app.app_context():
+        _seed_corpus()
+        service = ExploreService()
+        assert _titles(service.filter(author="Bob")) == ["Car Configurator"]
+        assert _titles(service.filter(date_from="2024-02-01", date_to="2024-02-28")) == ["Car Configurator"]
+        assert _titles(service.filter(date_from="2024-03-10", date_to="2024-01-01")) == []
