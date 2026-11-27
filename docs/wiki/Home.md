@@ -33,7 +33,7 @@ El detalle completo y justificado se encuentra en la página de **[Decisiones de
 
 | Fecha | Decisión | Resumen y justificación | Referencia |
 |-------|----------|-------------------------|------------|
-| 08/11/2026 | **D-01: Dominio FutbolHub** | Sustitución de modelos UVL por datasets CSV de resultados de partidos de fútbol (`jornada,fecha,local,visitante,goles_local,goles_visitante`), clasificación automática y filtros de dominio. | [Acta Fundacional, §2](Acta-Fundacional) |
+| 08/11/2026 | **D-01: Dominio FutbolHub** | Nuevo tipo de dataset: CSV de resultados de partidos de fútbol (`jornada,fecha,local,visitante,goles_local,goles_visitante`), clasificación automática y filtros de dominio. La sustitución de UVL que recogía el acta la corrige la D-09. | [Acta Fundacional, §2](Acta-Fundacional) |
 | 08/11/2026 | **D-02: Reparto de roles transversales** | Asignación según perfiles del test SuperPOP (PM: Juan; DevOps: Manuel; Configuración: Alejandro; QA: Nicolás; Incidencias: Juan María; Documentación: Roberto). | [Acta Fundacional, §3](Acta-Fundacional) |
 | 08/11/2026 | **D-03: Selección y reparto de WIs** | Elección de 2 WIs comunes (`#178` newdataset, `#177` fakenodo), 2 High (`#182`, `#196`), 2 Medium (`#195`, `#194`) y 2 Low (`#214`, `#211`) formando bloques coherentes y parejas coordinadas. | [Acta Fundacional, §3](Acta-Fundacional) |
 | 08/11/2026 | **D-04: Política EGCFlow sin PRs** | Ramas `main` (entregas etiquetadas), `trunk` (integración continua) y ramas de tarea `<nº issue>-<slug>`. Revisión en la propia issue en ≤ 48 h con `git diff trunk...rama`. | [Acta Fundacional, §5 y §7](Acta-Fundacional) |
@@ -41,6 +41,7 @@ El detalle completo y justificado se encuentra en la página de **[Decisiones de
 | 20/11/2026 | **D-06: Primer reparto de tareas (46 issues)** | Desglose en 46 issues de 1 a 3 días, etiquetas `tipo:` / `prioridad:` / `WI:`, hitos `0.1.0` (23 nov), `0.2.0` (30 nov) y `1.0.0` (defensa) y tablero Kanban. | [Decisiones §20/11/2026](Decisiones#20112026--primer-reparto-de-tareas) · Issue #1 |
 | 21/11/2026 | **D-07: Retirada de CD heredado del fork** | Eliminación de `CD_webhook.yml` y `CD_dockerhub.yml` y desactivación de `webhook` en `features_prod` para alinear el despliegue con Render. | [Decisiones §21/11/2026](Decisiones#21112026--retirada-del-despliegue-heredado-del-fork) · Issue #7 |
 | 22/11/2026 | **D-08: Entrega 0.1.0** | `trunk` llevado a `main`, etiqueta `0.1.0` y release con #1–#7, #17 y #47. La hace el PM en lugar del responsable por plazo. | [Decisiones §22/11/2026](Decisiones#22112026--entrega-010) · Issue #11 · [Release](https://github.com/jjuanx/FutbolHub/releases/tag/0.1.0) |
+| 27/11/2026 | **D-09: Decisiones de dominio con el tutor** | UVL se mantiene como tipo junto al de fútbol (corrige D-01). #195 se intenta completo (se puede recortar a *medium* si hace falta). Cada temporada admite uno o varios CSV, validados por fichero y en conjunto. | [Decisiones §27/11/2026](Decisiones#27112026--decisiones-de-dominio-con-el-tutor-15) · Issue #15 |
 
 ---
 

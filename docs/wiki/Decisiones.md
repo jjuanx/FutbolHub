@@ -7,6 +7,7 @@ Esta página recoge de forma cronológica todas las decisiones técnicas, arquit
 ### 08/11/2026 — Definición del dominio: datasets CSV de resultados de fútbol (WI-newdataset)
 - **Decisión:** Sustituir los modelos de características UVL de UVLHub por **datasets CSV de resultados de partidos de fútbol** (`jornada,fecha,local,visitante,goles_local,goles_visitante` en UTF-8), añadiendo metadatos específicos del dominio (competición, país, temporada, número de equipos y fuente), validación por fila y motivo, cálculo automático de clasificación y estadísticas por equipo, exportación a JSON y filtros en Explore.
 - **Motivo:** Permite conservar toda la arquitectura del hub (subida, validación, exploración, publicación con DOI y descarga) aplicándola a un dominio rico en reglas de negocio verificables con particiones de equivalencia y valores límite (goles negativos, fechas límite de temporada, equipos duplicados en una misma jornada).
+- **Corregida el 27/11/2026:** UVL no se sustituye, se mantiene como tipo de dataset junto al de fútbol (ver la decisión del 27/11/2026, #15).
 
 ---
 
@@ -59,3 +60,14 @@ Esta página recoge de forma cronológica todas las decisiones técnicas, arquit
 - **Decisión:** Llevar `trunk` a `main` (94fe910), etiquetar `0.1.0` y publicar la [release 0.1.0](https://github.com/jjuanx/FutbolHub/releases/tag/0.1.0) para el seguimiento del 23 de noviembre. Incluye #1, #2, #3, #4, #5, #6, #7, #47 y #17 (esta última del hito 0.2.0, ya terminada). CI de `main` en verde (Commits, Lint y Pytest).
 - **Quién:** la hace el PM porque Alejandro, responsable de la #11, no podía hacerla ese día. Por el mismo motivo de plazo, el PM integró en `trunk` las issues #3, #6 y #47 tras su visto bueno, en lugar de sus autores; consta en cada issue.
 - **Pendiente:** comprobar en `main` que una issue cerrada sin revisión aprobada se reabre (#47), y el despliegue continuo en Render (#8, #9) para la entrega 0.2.0.
+
+---
+
+### 27/11/2026 — Decisiones de dominio con el tutor (#15)
+- **UVL se mantiene como tipo de dataset.** FutbolHub tendrá dos tipos: UVL, tal como funciona hoy, y resultados de fútbol (CSV). Corrige la decisión del 08/11/2026, que hablaba de sustituir UVL.
+  - **Motivo:** el WI-newdataset (#178) pide que UVL siga funcionando como uno de los tipos, y el tutor lo confirmó por correo el 27/11/2026: «hay que mantener los modelos UVL como uno de los tipos, además de añadir vuestro nuevo tipo de datos de fútbol».
+- **#195 (versionado menor) sigue en el reparto y se intenta completo**, aunque en uvlhub figure como dificultad *high* y en el acta como M. Si hace falta, se puede recortar algún aspecto para dejarlo en *medium*, registrándolo aquí con su motivo.
+  - **Motivo:** el tutor indicó que no hace falta cambiar de WI y animó a intentarlo tal como está. Juan María sigue como responsable de #37, #38 y #39.
+- **Cada dataset (una temporada) admite uno o varios CSV** con el mismo formato (`jornada,fecha,local,visitante,goles_local,goles_visitante`), sin imponer un fichero por jornada. Se valida cada fichero y también el conjunto del dataset (partidos duplicados y equipo dos veces en la misma jornada entre ficheros). Los metadatos van en el dataset, no en cada fichero.
+  - **Motivo:** la jornada ya va en cada fila, así que el reparto entre ficheros no aporta información. Así se evitan los ~38 subformularios de metadatos que pediría un fichero por jornada, y #182 (ZIP/GitHub), #196 (nueva versión) y #19 (clasificación) siguen funcionando igual. El tutor no puso pegas. Se adopta salvo que alguien se oponga en la #15 antes del 29/11/2026 (análisis completo en la #15).
+- **Impacto:** #16 (base común con los dos tipos, sin retirar UVL), #18 (elegir tipo al subir; en fútbol, un formulario de metadatos por dataset y validación entre ficheros reutilizando el validador de #17) y #23 (los ejemplos de fútbol se añaden, `uvl_examples/` se queda).
