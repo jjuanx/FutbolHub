@@ -11,6 +11,7 @@ from app import db
 MIN_TEAMS = 2
 MAX_TEAMS = 100
 
+
 class PublicationType(Enum):
     NONE = "none"
     ANNOTATION_COLLECTION = "annotationcollection"
