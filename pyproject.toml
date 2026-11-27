@@ -15,6 +15,7 @@ features = [
     "hubfile",
     "profile",
     "public",
+    "resultsfile",
     "team",
     "zenodo",
 ]
