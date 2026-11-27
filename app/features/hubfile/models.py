@@ -4,16 +4,29 @@ from flask import request
 
 from app import db
 from app.features.auth.models import User
-from app.features.dataset.models import DataSet
+from app.features.dataset.models import BaseDataset
 
 
 class Hubfile(db.Model):
+    """A stored file. It belongs to exactly one parent: a feature model (UVL) or a results file (football)."""
+
     __tablename__ = "file"
+    __table_args__ = (
+        db.CheckConstraint(
+            "(feature_model_id IS NULL) <> (results_file_id IS NULL)",
+            name="ck_file_exactly_one_parent",
+        ),
+    )
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(120), nullable=False)
     checksum = db.Column(db.String(120), nullable=False)
     size = db.Column(db.Integer, nullable=False)
-    feature_model_id = db.Column(db.Integer, db.ForeignKey("feature_model.id"), nullable=False)
+    feature_model_id = db.Column(db.Integer, db.ForeignKey("feature_model.id"), nullable=True)
+    results_file_id = db.Column(db.Integer, db.ForeignKey("results_file.id"), nullable=True)
+
+    def parent(self):
+        """The feature model or results file this file belongs to."""
+        return self.feature_model or self.results_file
 
     def get_formatted_size(self):
         from app.features.dataset.services import SizeService
@@ -25,7 +38,7 @@ class Hubfile(db.Model):
 
         return HubfileService().get_owner_user_by_hubfile(self)
 
-    def get_dataset(self) -> DataSet:
+    def get_dataset(self) -> BaseDataset:
         from app.features.hubfile.services import HubfileService
 
         return HubfileService().get_dataset_by_hubfile(self)

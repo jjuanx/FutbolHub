@@ -3,9 +3,10 @@ from sqlalchemy import func
 
 from app import db
 from app.features.auth.models import User
-from app.features.dataset.models import DataSet
+from app.features.dataset.models import BaseDataset
 from app.features.featuremodel.models import FeatureModel
 from app.features.hubfile.models import Hubfile, HubfileDownloadRecord, HubfileViewRecord
+from app.features.resultsfile.models import ResultsFile
 
 
 class HubfileRepository(BaseRepository):
@@ -13,17 +14,24 @@ class HubfileRepository(BaseRepository):
         super().__init__(Hubfile)
 
     def get_owner_user_by_hubfile(self, hubfile: Hubfile) -> User:
-        return (
-            db.session.query(User)
-            .join(DataSet)
-            .join(FeatureModel)
-            .join(Hubfile)
-            .filter(Hubfile.id == hubfile.id)
-            .first()
-        )
+        dataset = self.get_dataset_by_hubfile(hubfile)
+        return dataset.user if dataset else None
 
-    def get_dataset_by_hubfile(self, hubfile: Hubfile) -> DataSet:
-        return db.session.query(DataSet).join(FeatureModel).join(Hubfile).filter(Hubfile.id == hubfile.id).first()
+    def get_dataset_by_hubfile(self, hubfile: Hubfile) -> BaseDataset:
+        """Dataset of the file, whatever its type: UVL (through its feature model) or football (its results file)."""
+        uvl = (
+            db.session.query(BaseDataset)
+            .join(FeatureModel, FeatureModel.data_set_id == BaseDataset.id)
+            .join(Hubfile, Hubfile.feature_model_id == FeatureModel.id)
+            .filter(Hubfile.id == hubfile.id)
+        )
+        football = (
+            db.session.query(BaseDataset)
+            .join(ResultsFile, ResultsFile.data_set_id == BaseDataset.id)
+            .join(Hubfile, Hubfile.results_file_id == ResultsFile.id)
+            .filter(Hubfile.id == hubfile.id)
+        )
+        return uvl.first() or football.first()
 
 
 class HubfileViewRecordRepository(BaseRepository):

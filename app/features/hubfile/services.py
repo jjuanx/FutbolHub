@@ -3,7 +3,7 @@ import os
 from splent_framework.services.BaseService import BaseService
 
 from app.features.auth.models import User
-from app.features.dataset.models import DataSet
+from app.features.dataset.models import BaseDataset
 from app.features.hubfile.models import Hubfile
 from app.features.hubfile.repositories import (
     HubfileDownloadRecordRepository,
@@ -21,7 +21,7 @@ class HubfileService(BaseService):
     def get_owner_user_by_hubfile(self, hubfile: Hubfile) -> User:
         return self.repository.get_owner_user_by_hubfile(hubfile)
 
-    def get_dataset_by_hubfile(self, hubfile: Hubfile) -> DataSet:
+    def get_dataset_by_hubfile(self, hubfile: Hubfile) -> BaseDataset:
         return self.repository.get_dataset_by_hubfile(hubfile)
 
     def get_path_by_hubfile(self, hubfile: Hubfile) -> str:
