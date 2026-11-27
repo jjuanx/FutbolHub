@@ -220,7 +220,11 @@ class FootballDataSet(BaseDataset):
     def _validate_required_text(self, key, value):
         if value is None or not str(value).strip():
             raise ValueError(f"{key} is required for a football dataset")
-        return str(value).strip()
+        text = str(value).strip()
+        max_length = type(self).__table__.c[key].type.length
+        if len(text) > max_length:
+            raise ValueError(f"{key} must be at most {max_length} characters, got {len(text)}")
+        return text
 
     @validates("season")
     def _validate_season(self, key, value):

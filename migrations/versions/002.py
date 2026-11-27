@@ -57,12 +57,38 @@ def upgrade():
 
 
 def downgrade():
-    # The schema of 001 has no place for football data: remove it before going back.
-    op.execute('DELETE FROM file WHERE results_file_id IS NOT NULL')
-    op.execute("DELETE FROM ds_download_record WHERE dataset_id IN (SELECT id FROM data_set WHERE dataset_type = 'football')")
-    op.execute("DELETE FROM ds_view_record WHERE dataset_id IN (SELECT id FROM data_set WHERE dataset_type = 'football')")
-    op.execute('DELETE FROM results_file')
-    op.execute("DELETE FROM data_set WHERE dataset_type = 'football'")
+    # The schema of 001 has no place for football data: remove it, children before parents, before going back.
+    conn = op.get_bind()
+
+    def ids(query):
+        return [row[0] for row in conn.execute(sa.text(query))]
+
+    def delete_in(table, column, values):
+        if values:
+            stmt = sa.text(f'DELETE FROM {table} WHERE {column} IN :values').bindparams(
+                sa.bindparam('values', expanding=True)
+            )
+            conn.execute(stmt, {'values': values})
+
+    football_files = ids('SELECT id FROM file WHERE results_file_id IS NOT NULL')
+    football_datasets = ids("SELECT id FROM data_set WHERE dataset_type = 'football'")
+    football_meta = ids("SELECT ds_meta_data_id FROM data_set WHERE dataset_type = 'football'")
+    football_metrics = []
+    if football_meta:
+        stmt = sa.text('SELECT ds_metrics_id FROM ds_meta_data WHERE id IN :values AND ds_metrics_id IS NOT NULL')
+        stmt = stmt.bindparams(sa.bindparam('values', expanding=True))
+        football_metrics = [row[0] for row in conn.execute(stmt, {'values': football_meta})]
+
+    delete_in('file_download_record', 'file_id', football_files)
+    delete_in('file_view_record', 'file_id', football_files)
+    delete_in('file', 'id', football_files)
+    delete_in('results_file', 'data_set_id', football_datasets)
+    delete_in('ds_download_record', 'dataset_id', football_datasets)
+    delete_in('ds_view_record', 'dataset_id', football_datasets)
+    delete_in('data_set', 'id', football_datasets)
+    delete_in('author', 'ds_meta_data_id', football_meta)
+    delete_in('ds_meta_data', 'id', football_meta)
+    delete_in('ds_metrics', 'id', football_metrics)
 
     with op.batch_alter_table('file', schema=None) as batch_op:
         batch_op.drop_constraint('ck_file_exactly_one_parent', type_='check')

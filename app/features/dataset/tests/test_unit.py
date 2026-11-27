@@ -211,6 +211,17 @@ def test_football_dataset_validates_the_number_of_teams_on_assignment():
         _football(number_of_teams=1)
 
 
+@pytest.mark.parametrize("field, max_length", [("competition", 120), ("country", 120), ("data_source", 255)])
+def test_football_text_metadata_accepts_values_up_to_the_column_length(field, max_length):
+    assert len(getattr(_football(**{field: "x" * max_length}), field)) == max_length
+
+
+@pytest.mark.parametrize("field, max_length", [("competition", 120), ("country", 120), ("data_source", 255)])
+def test_football_text_metadata_rejects_values_longer_than_the_column(field, max_length):
+    with pytest.raises(ValueError, match=f"{field} must be at most {max_length}"):
+        _football(**{field: "x" * (max_length + 1)})
+
+
 @pytest.mark.parametrize("season", ["23-24", "2023-", "temporada 2023", "2023-24-25"])
 def test_football_dataset_rejects_unrecognised_season_formats(season):
     with pytest.raises(ValueError):
